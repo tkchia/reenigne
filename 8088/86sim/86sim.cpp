@@ -45,12 +45,14 @@ int oCycle;
 
 void o(char c)
 {
+#if 0
     while (oCycle < ios) {
         ++oCycle;
         printf(" ");
     }
     ++oCycle;
     printf("%c", c);
+#endif
 }
 
 Word cs() { return registers[9]; }
@@ -205,7 +207,9 @@ void div()
 }
 void doJump(Word newIP)
 {
+#if 0
     printf("\n");
+#endif
     ip = newIP;
 }
 void jumpShort(Byte data, bool jump)
@@ -609,6 +613,16 @@ int main(int argc, char* argv[])
         registers[8] = d >> 4;
         writeByte(0, d & 15, 0);
     }
+#if 1
+    // Fill up parts of the interrupt vector table and parts of the BIOS ROM
+    // area with stuff, for the benefit of the far pointer tests.
+    registers[8] = 0x0000;
+    writeWord(0x0000, 0x0080);
+    writeWord(0xFFFF, 0x0082);
+    registers[8] = 0xF000;
+    for (i = 0; i < 0x100; i += 2)
+        writeWord(0xF4F4, 0xFF00 + (unsigned)i);
+#endif
     ios = 0;
     registers[8] = loadSegment - 0x10;
     setAX(0x0000);
@@ -865,12 +879,14 @@ int main(int argc, char* argv[])
                 o('L');
                 break;
             case 0xa0: case 0xa1:  // MOV accum,xv
-                data = read(fetchWord(), 3);
+                segment = 3;
+                data = read(fetchWord());
                 setAccum();
                 o('m');
                 break;
             case 0xa2: case 0xa3:  // MOV xv,accum
-                write(getAccum(), fetchWord(), 3);
+                segment = 3;
+                write(getAccum(), fetchWord());
                 o('m');
                 break;
             case 0xa4: case 0xa5:  // MOVSv

@@ -46,6 +46,7 @@ bool alerting = false;
 #include "alfe/file_stream.h"
 #include "alfe/character_source.h"
 #if defined(_WIN32) && defined(_WINDOWS)
+#include "alfe/thread.h"
 #include "alfe/vectors.h"
 #include "alfe/colour_space.h"
 #include "alfe/bitmap.h"
@@ -106,7 +107,9 @@ protected:
     virtual void run() = 0;
     Array<String> _arguments;
     int _returnValue;
+#if defined(_WIN32) && defined(_WINDOWS)
     HINSTANCE _hInst;
+#endif
 private:
 #ifdef _WIN32
 #ifdef _WINDOWS

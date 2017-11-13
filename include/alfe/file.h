@@ -94,7 +94,7 @@ protected:
         bool equals(const ConstHandle::Body* other) const
         {
             auto o = other->to<NamedBody>();
-            return o != 0 && _parent == o->_parent & _name == o->_name;
+            return o != 0 && _parent == o->_parent && _name == o->_name;
         }
     private:
         DirectoryT<T> _parent;
@@ -268,7 +268,7 @@ private:
 
         String name;
         do {
-            int p;
+            int p = subDirectoryStart;
             while (c != '/') {
                 if (c == 0)
                     throw Exception("Invalid path");
@@ -313,9 +313,9 @@ private:
     template<class U> friend class DirectoryT;
     friend class Console;
 
-    template<class U> friend void applyToWildcard(U& functor,
-        const String& wildcard, int recurseIntoDirectories,
-        const DirectoryT<T>& relativeTo);
+    template<class U> friend void applyToWildcard(U functor,
+        const String& wildcard, int recurseIntoDirectories = true,
+        const Directory& relativeTo = CurrentDirectory());
 };
 
 template<class T> class DirectoryT : public FileSystemObject
@@ -795,8 +795,9 @@ private:
     friend class Console;
 };
 
-template<class T, class V = Void> void applyToWildcard(T& functor,
-	CharacterSourceT<V> s, int recurseIntoDirectories, Directory directory)
+#if 0
+template<class T> void applyToWildcard(T functor, CharacterSource s,
+    int recurseIntoDirectories, Directory directory)
 {
     int subDirectoryStart = s.offset();
     int c = s.get();
@@ -891,10 +892,11 @@ template<class T, class V = Void> void applyToWildcard(T& functor,
         handle.next();
     }
 }
+#endif
 
-template<class T> void applyToWildcard(T& functor, const String& wildcard,
-    int recurseIntoDirectories = true,
-    const Directory& relativeTo = CurrentDirectory())
+template<class T> void applyToWildcard(T functor, const String& wildcard,
+    int recurseIntoDirectories,
+    const Directory& relativeTo)
 {
     CharacterSource s(wildcard);
 #ifdef _WIN32

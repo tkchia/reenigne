@@ -104,11 +104,12 @@ public:
         do {
             errno = 0;
             _data = readdir(_dir);
-            if (_data == NULL)
+            if (_data == NULL) {
                 if (errno == 0)
                     _complete = true;
                 else
                     throw Exception::systemError("Reading directory " + _path);
+            }
             String n = name();
             if (n == "." || n == "..")
                 continue;
