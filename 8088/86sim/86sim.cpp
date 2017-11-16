@@ -622,6 +622,10 @@ int main(int argc, char* argv[])
     registers[8] = 0xF000;
     for (i = 0; i < 0x100; i += 2)
         writeWord(0xF4F4, 0xFF00 + (unsigned)i);
+    // We need some variety in the ROM BIOS content...
+    writeByte(0xEA, 0xFFF0);
+    writeWord(0xFFF0, 0xFFF1);
+    writeWord(0xF000, 0xFFF3);
 #endif
     ios = 0;
     registers[8] = loadSegment - 0x10;
