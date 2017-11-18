@@ -27,7 +27,7 @@ bool wordSize;
 DWord data;
 DWord destination;
 DWord source;
-int segment;
+int segment = 0;
 int rep = 0;
 bool repeating = false;
 Word savedIP;
@@ -614,11 +614,15 @@ int main(int argc, char* argv[])
         writeByte(0, d & 15, 0);
     }
 #if 1
-    // Fill up parts of the interrupt vector table and parts of the BIOS ROM
-    // area with stuff, for the benefit of the far pointer tests.
+    // Fill up parts of the interrupt vector table, the BIOS clock tick count,
+    // and parts of the BIOS ROM area with stuff, for the benefit of the far
+    // pointer tests.
     registers[8] = 0x0000;
     writeWord(0x0000, 0x0080);
     writeWord(0xFFFF, 0x0082);
+    writeWord(0x0058, 0x046C);
+    writeWord(0x000C, 0x046E);
+    writeByte(0x00, 0x0470);
     registers[8] = 0xF000;
     for (i = 0; i < 0x100; i += 2)
         writeWord(0xF4F4, 0xFF00 + (unsigned)i);
@@ -968,17 +972,21 @@ int main(int argc, char* argv[])
                 break;
             case 0xcd:
                 data = fetchByte();
-                if (data != 0x21) {
-                    fprintf(stderr, "Unknown interrupt 0x%02x", data);
-                    runtimeError("");
-                }
-                switch (ah()) {
-                    case 0x30:
+                switch (data << 8 | ah()) {
+                    case 0x1a00:
+                        data = registers[8];
+                        registers[8] = 0;
+                        setDX(readWord(0x046c, 0));
+                        setCX(readWord(0x046e, 0));
+                        setAL(readByte(0x0470, 0));
+                        registers[8] = data;
+                        break;
+                    case 0x2130:
                         setAX(0x1403);
                         setBX(0xff00);
                         setCX(0);
                         break;
-                    case 0x39:
+                    case 0x2139:
                         if (mkdir(dsdx(), 0700) == 0)
                             setCF(false);
                         else {
@@ -986,7 +994,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x3a:
+                    case 0x213a:
                         if (rmdir(dsdx()) == 0)
                             setCF(false);
                         else {
@@ -994,7 +1002,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x3b:
+                    case 0x213b:
                         if (chdir(dsdx()) == 0)
                             setCF(false);
                         else {
@@ -1002,7 +1010,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x3c:
+                    case 0x213c:
                         fileDescriptor = creat(dsdx(), 0700);
                         if (fileDescriptor != -1) {
                             setCF(false);
@@ -1015,7 +1023,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x3d:
+                    case 0x213d:
                         fileDescriptor = open(dsdx(), al() & 3, 0700);
                         if (fileDescriptor != -1) {
                             setCF(false);
@@ -1027,7 +1035,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x3e:
+                    case 0x213e:
                         fileDescriptor = fileDescriptors[bx()];
                         if (fileDescriptor == -1) {
                             setCF(true);
@@ -1044,7 +1052,7 @@ int main(int argc, char* argv[])
                             setCF(false);
                         }
                         break;
-                    case 0x3f:
+                    case 0x213f:
                         fileDescriptor = fileDescriptors[bx()];
                         if (fileDescriptor == -1) {
                             setCF(true);
@@ -1062,7 +1070,7 @@ int main(int argc, char* argv[])
                             setAX(data);
                         }
                         break;
-                    case 0x40:
+                    case 0x2140:
                         fileDescriptor = fileDescriptors[bx()];
                         if (fileDescriptor == -1) {
                             setCF(true);
@@ -1079,7 +1087,7 @@ int main(int argc, char* argv[])
                             setAX(data);
                         }
                         break;
-                    case 0x41:
+                    case 0x2141:
                         if (unlink(dsdx()) == 0)
                             setCF(false);
                         else {
@@ -1087,7 +1095,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x42:
+                    case 0x2142:
                         fileDescriptor = fileDescriptors[bx()];
                         if (fileDescriptor == -1) {
                             setCF(true);
@@ -1106,7 +1114,7 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x44:
+                    case 0x2144:
                         if (al() != 0) {
                             fprintf(stderr, "Unknown IOCTL 0x%02x", al());
                             runtimeError("");
@@ -1133,7 +1141,7 @@ int main(int argc, char* argv[])
                             }
                         }
                         break;
-                    case 0x47:
+                    case 0x2147:
                         if (getcwd(pathBuffers[0], 64) != 0) {
                             setCF(false);
                             initString(si(), 3, true, 0);
@@ -1143,13 +1151,13 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
-                    case 0x4c:
+                    case 0x214c:
                         printf("*** Bytes: %i\n", length);
                         printf("*** Cycles: %i\n", ios);
                         printf("*** EXIT code %i\n", al());
                         exit(0);
                         break;
-                    case 0x56:
+                    case 0x2156:
                         if (rename(dsdx(), initString(di(), 0, false, 1)) == 0)
                             setCF(false);
                         else {
@@ -1158,7 +1166,8 @@ int main(int argc, char* argv[])
                         }
                         break;
                     default:
-                        fprintf(stderr, "Unknown DOS call 0x%02x", ah());
+                        fprintf(stderr, "Unknown DOS/BIOS call: int 0x%02x, "
+                            "ah = 0x%02x", (unsigned)data, (unsigned)ah());
                         runtimeError("");
                 }
                 o('$');
