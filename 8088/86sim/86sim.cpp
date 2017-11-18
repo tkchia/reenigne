@@ -103,7 +103,7 @@ DWord physicalAddress(Word offset, int seg, bool write)
             seg = segmentOverride;
     }
     Word segmentAddress = registers[8 + seg];
-    DWord a = ((segmentAddress << 4) + offset) & 0xfffff;
+    DWord a = (((DWord)segmentAddress << 4) + offset) & 0xfffff;
     bool bad = false;
     if (write) {
         if (a < ((DWord)loadSegment << 4) - 0x100 && running)
@@ -593,8 +593,8 @@ int main(int argc, char* argv[])
         setSP(readWord(0x110));
         stackLow =
             ((((exeLength - headerLength + 15) >> 4) + loadSegment) - ss) << 4;
-        if (stackLow < 0)
-            stackLow = 0;
+        if (stackLow < 0x10)
+            stackLow = 0x10;
         ip = readWord(0x114);
         registers[9] = readWord(0x116) + loadSegment;  // CS
     }
@@ -608,10 +608,13 @@ int main(int argc, char* argv[])
     }
     // Some testcases copy uninitialized stack data, so mark as initialized
     // any locations that could possibly be stack.
-    for (DWord d = (loadSegment << 4) + length;
-        d < (DWord)((registers[10] << 4) + sp()); ++d) {
-        registers[8] = d >> 4;
-        writeByte(0, d & 15, 0);
+    if (sp()) {
+        for (Word d = stackLow; d < sp(); ++d)
+            writeByte(0, d, 2);
+    } else {
+        Word d = 0;
+        while (--d >= stackLow)
+            writeByte(0, d, 2);
     }
 #if 1
     // Fill up parts of the interrupt vector table, the BIOS clock tick count,
