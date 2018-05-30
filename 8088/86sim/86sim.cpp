@@ -1168,6 +1168,25 @@ int main(int argc, char* argv[])
                             setAX(dosError(errno));
                         }
                         break;
+                    case 0x2157:
+                        switch (al()) {
+                            case 0x00:
+                                fileDescriptor = fileDescriptors[bx()];
+                                if (fileDescriptor == -1) {
+                                    setCF(true);
+                                    setAX(6);  // Invalid handle
+                                    break;
+                                }
+                                setCX(0); // Return a "reasonable" file time...
+                                setDX(0); // ...and file date
+                                setCF(false);
+                                break;
+                            default:
+                                fprintf(stderr, "Unknown DOS call: int 0x21, "
+                                    "ax = 0x%04x", (unsigned)ax());
+                                runtimeError("");
+                        }
+                        break;
                     default:
                         fprintf(stderr, "Unknown DOS/BIOS call: int 0x%02x, "
                             "ah = 0x%02x", (unsigned)data, (unsigned)ah());
