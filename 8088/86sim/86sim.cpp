@@ -1177,8 +1177,8 @@ int main(int argc, char* argv[])
                                     setAX(6);  // Invalid handle
                                     break;
                                 }
-                                setCX(0); // Return a "reasonable" file time...
-                                setDX(0); // ...and file date
+                                setCX(0x0000); // Return a "reasonable" file
+                                setDX(0x0021); // time and file date
                                 setCF(false);
                                 break;
                             default:
