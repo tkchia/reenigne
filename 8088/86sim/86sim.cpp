@@ -1311,7 +1311,8 @@ int main(int argc, char* argv[])
                 break;
             case 0xe9:  // JMP cw
                 o('j');
-                doJump(ip + fetchWord());
+                data = fetchWord();
+                doJump(ip + data);
                 break;
             case 0xea:  // JMP cp
                 o('j');
