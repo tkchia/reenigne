@@ -55,6 +55,7 @@ void o(char c)
 #endif
 }
 
+Word es() { return registers[8]; }
 Word cs() { return registers[9]; }
 void error(const char* operation)
 {
@@ -1153,6 +1154,23 @@ int main(int argc, char* argv[])
                             setCF(true);
                             setAX(dosError(errno));
                         }
+                        break;
+                    case 0x214a:
+                        // Only allow attempts to "resize" the PSP segment,
+                        // and check that CS:IP and SS:SP do not overshoot the
+                        // segment end
+                        if (es() == loadSegment - 0x10) {
+                            DWord memEnd = (DWord)(es() + bx()) << 4;
+                            if (physicalAddress(ip, 1, false) < memEnd &&
+                                physicalAddress(sp() - 1, 2, true) < memEnd) {
+                                setCF(false);
+                                break;
+                            }
+                        }
+                        fprintf(stderr, "Bad attempt to resize DOS memory "
+                            "block: int 0x21, ah = 0x4a, bx = 0x%04x, "
+                            "es = 0x%04x", (unsigned)bx(), (unsigned)es());
+                        runtimeError("");
                         break;
                     case 0x214c:
                         printf("*** Bytes: %i\n", length);
