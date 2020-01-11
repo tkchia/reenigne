@@ -40,7 +40,7 @@ const char* filename;
 int length;
 int ios;
 bool running = false;
-int stackLow;
+DWord stackLow;
 int oCycle;
 
 void o(char c)
@@ -338,7 +338,7 @@ void push(Word value)
 {
     o('{');
     setSP(sp() - 2);
-    if (sp() <= stackLow)
+    if (((DWord)registers[10] << 4) + sp() <= stackLow)
         runtimeError("Stack overflow");
     writeWord(value, sp(), 2);
 }
@@ -593,9 +593,9 @@ int main(int argc, char* argv[])
         registers[10] = ss;
         setSP(readWord(0x110));
         stackLow =
-            ((((exeLength - headerLength + 15) >> 4) + loadSegment) - ss) << 4;
-        if (stackLow < 0x10)
-            stackLow = 0x10;
+            (((exeLength - headerLength + 15) >> 4) + loadSegment) << 4;
+        if (stackLow < ((DWord)ss << 4) + 0x10)
+            stackLow = ((DWord)ss << 4) + 0x10;
         ip = readWord(0x114);
         registers[9] = readWord(0x116) + loadSegment;  // CS
     }
@@ -605,7 +605,7 @@ int main(int argc, char* argv[])
             exit(1);
         }
         setSP(0xFFFE);
-        stackLow = length + 0x100;
+        stackLow = loadSegment + length;
     }
     // Some testcases copy uninitialized stack data, so mark as initialized
     // any locations that could possibly be stack.
