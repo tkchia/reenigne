@@ -605,17 +605,26 @@ int main(int argc, char* argv[])
             exit(1);
         }
         setSP(0xFFFE);
-        stackLow = loadSegment + length;
+        stackLow = ((DWord)loadSegment << 4) + length;
     }
     // Some testcases copy uninitialized stack data, so mark as initialized
     // any locations that could possibly be stack.
     if (sp()) {
-        for (Word d = stackLow; d < sp(); ++d)
+        Word d = 0;
+        if (((DWord)registers[10] << 4) < stackLow)
+            d = stackLow - ((DWord)registers[10] << 4);
+        while (d < sp()) {
             writeByte(0, d, 2);
+            ++d;
+        }
     } else {
         Word d = 0;
-        while (--d >= stackLow)
+        if (((DWord)registers[10] << 4) < stackLow)
+            d = stackLow - ((DWord)registers[10] << 4);
+        do {
             writeByte(0, d, 2);
+            ++d;
+        } while (d != 0);
     }
 #if 1
     // Fill up parts of the interrupt vector table, the BIOS clock tick count,
