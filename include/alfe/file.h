@@ -397,7 +397,9 @@ private:
             char* p = reinterpret_cast<char*>(buffer.data());
             if (getcwd(p, size) != 0) {
                 String path = buffer.subString(0, strlen(p));
-                return FileSystemObject::parse(path, RootDirectory(), false);
+                return FileSystemObject::parse(path,
+                                               Directory(RootDirectory()),
+                                               false);
             }
             if (errno != ERANGE)
                 throw Exception::systemError("Obtaining current directory");

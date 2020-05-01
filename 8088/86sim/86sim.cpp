@@ -33,7 +33,7 @@ bool repeating = false;
 Word savedIP;
 Word savedCS;
 int segmentOverride = -1;
-Word remainder;
+Word residue;
 Byte opcode;
 int aluOperation;
 const char* filename;
@@ -200,11 +200,11 @@ void div()
         --data;
         product -= source;
     }
-    remainder = destination - product;
+    residue = destination - product;
     if (negative)
         data = (unsigned)-(signed)data;
     if (dividendNegative)
-        remainder = (unsigned)-(signed)remainder;
+        residue = (unsigned)-(signed)residue;
 }
 void doJump(Word newIP)
 {
@@ -1438,7 +1438,7 @@ int main(int argc, char* argv[])
                                 if (data > 0x7f && data < 0xffffff80)
                                     divideOverflow();
                             }
-                            setAH((Byte)remainder);
+                            setAH((Byte)residue);
                             setAL(data);
                         }
                         else {
@@ -1452,7 +1452,7 @@ int main(int argc, char* argv[])
                                 if (data > 0x7fff && data < 0xffff8000)
                                     divideOverflow();
                             }
-                            setDX(remainder);
+                            setDX(residue);
                             setAX(data);
                         }
                         o("/\\"[opcode & 1]);

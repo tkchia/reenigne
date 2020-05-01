@@ -8,11 +8,13 @@ class FileDescriptor : public ConstHandle
 {
 public:
     FileDescriptor() : _fileDescriptor(-1) { }
+#if 0
     WindowsHandle(int fileDescriptor, bool own = true)
       : _handle(handle),
         ConstHandle((own && fileDescriptor != -1)
             ? create<Body>(fileDescriptor) : ConstHandle())
     { }
+#endif
     bool valid() const { return _fileDescriptor != -1; }
     operator int() const { return _fileDescriptor; }
 protected:
@@ -20,6 +22,7 @@ protected:
       : ConstHandle(other), _fileDescriptor(fileDescriptor) { }
     class Body : public ConstHandle::Body
     {
+    public:
         Body(int fileDescriptor) : _fileDescriptor(fileDescriptor) { }
         ~Body()
         {
@@ -29,7 +32,6 @@ protected:
     private:
         int _fileDescriptor;
     };
-private:
     int _fileDescriptor;
 };
 #endif
@@ -55,7 +57,7 @@ public:
     StreamT() { }
     StreamT(int fileDescriptor, const File& file = File(), bool own = true)
       : FileDescriptor(create<Body>(own &&
-          fileDesciptor != -1 ? fileDescriptor : -1), fileDescriptor),
+          fileDescriptor != -1 ? fileDescriptor : -1), fileDescriptor),
         _file(file)
     { }
     operator int() const { return operator int(); }

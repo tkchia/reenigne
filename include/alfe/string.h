@@ -3,7 +3,9 @@
 #ifndef INCLUDED_STRING_H
 #define INCLUDED_STRING_H
 
+#include <cctype>
 #include <cstdarg>
+#include <cstdio>
 
 template<class T> class ExceptionT;
 typedef ExceptionT<void> Exception;
